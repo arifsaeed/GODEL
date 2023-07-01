@@ -20,6 +20,7 @@ import torch
 from datasets import load_dataset, load_metric
 from torch.utils.data.dataloader import DataLoader
 from tqdm.auto import tqdm
+#from peft import LoraConfig, TaskType, get_peft_model
 
 import transformers
 from accelerate import Accelerator
@@ -38,6 +39,7 @@ from transformers import (
 )
 
 from utils.text_normalization import normalize_answer
+from datasets_loader.dataset_mapping import goal_directed_mapping_function,chat_context_mapping_function
 from dotenv import load_dotenv
 
 # Load pre-defined environment variable
@@ -246,6 +248,13 @@ def parse_args():
         default='DialoGLM',
         help="Description to the experiment worksheet name",
     )
+    parser.add_argument(
+        "--training_type",
+        type=str,
+        default='peft',
+        help="the type of training to be carried out, i.e. full_finetuning, peft",
+    )
+    
 
     args = parser.parse_args()
 
@@ -349,7 +358,7 @@ def main():
     if args.config_name:
         config = AutoConfig.from_pretrained(args.config_name)
     elif args.model_name_or_path:
-        config = AutoConfig.from_pretrained(args.model_name_or_path)
+        config = AutoConfig.from_pretrained(args.model_name_or_path,trust_remote_code=True)
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
@@ -373,6 +382,10 @@ def main():
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForSeq2SeqLM.from_config(config)
+    
+    #if (args.training_type =="peft"):
+    #    model = get_peft_model(model)
+    #    model.print_trainable_parameters()
 
     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     model.resize_token_embeddings(len(tokenizer))
@@ -381,33 +394,7 @@ def main():
 
     padding = "max_length" if args.pad_to_max_length else False
     max_target_length = args.max_target_length
-    def dataset_mapping_function(examples):
-        contextes = examples['Context']
-        responses = examples['Response']
-        kbs = examples['Knowledge']
-    
-        inputs = []
-        for context, kb in zip(contextes, kbs):
-            if args.no_kb:
-                inputs.append(context + ' => ')
-            else:
-                _input = context + ' <|Knowledge|> ' + kb + ' => '
-                inputs.append(_input)
-        model_inputs = tokenizer(inputs, max_length=args.max_length, padding=padding, truncation=True)
 
-        # Setup the tokenizer for targets
-        with tokenizer.as_target_tokenizer():
-            labels = tokenizer(responses, max_length=max_target_length, padding=padding, truncation=True)
-
-        # If we are padding here, replace all tokenizer.pad_token_id in the labels by -100 when we want to ignore
-        # padding in the loss.
-        if padding == "max_length" and args.ignore_pad_token_for_loss:
-            labels["labels"] = [
-                [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
-            ]
-
-        model_inputs["labels"] = labels["labels"]
-        return model_inputs
 
     # Note that with `batched=True`, this map processes 1,000 texts together, so group_texts throws away a remainder
     # for each of those groups of 1,000 texts. You can adjust that batch_size here but a higher value might be slower
@@ -415,10 +402,16 @@ def main():
     #
     # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
     # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map
-    
-    column_names = ['Context','Response','Knowledge']
+
+
+    #****************THIS NEEDS TO BE PUT IN A CONDITIONAL STATEMENT*******************************   
+    directed_column_names = ['Context','Response','Knowledge']
+    chat_column_names=['instruction','context','response', 'category']
+    column_names=chat_column_names
+    #**********************************************************************************************
+ 
     lm_datasets = raw_datasets.map(
-        dataset_mapping_function,
+        chat_context_mapping_function,
         batched=True,
         remove_columns=column_names,
         num_proc=args.preprocessing_num_workers,
