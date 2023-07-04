@@ -40,6 +40,43 @@
         "50000"
       ],
       "justMyCode": true
+    },
+    {
+      "name": "hfdataload",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/GODEL/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--model_name_or_path",
+        "t5-small",
+        "--dataset_name",
+        "asaeed/chat_training_data",
+        "--output_dir",
+        "examples/chat/ckpt",
+        "--per_device_train_batch_size",
+        "16",
+        "--per_device_eval_batch_size",
+        "16",
+        "--max_target_length",
+        "256",
+        "--max_length",
+        "512",
+        "--num_train_epochs",
+        "10",
+        "--preprocessing_num_workers",
+        "16",
+        "--num_beams",
+        "5",
+        "--exp_name",
+        "wow-test",
+        "--learning_rate",
+        "5e-5",
+        "--save_every_checkpoint",
+        "--save_steps",
+        "50000"
+      ],
+      "justMyCode": true
     }
   ]
 }

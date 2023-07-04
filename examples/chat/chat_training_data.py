@@ -40,9 +40,10 @@ class Chat(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
 
-        train_path = '/home/arif/Documents/Data/Share_GPT/chat_trainformat_train.jsonl'
-        validation_path = '/home/arif/Documents/Data/Share_GPT/chat_trainformat_val.jsonl'
-        test_path = '/home/arif/Documents/Data/Share_GPT/chat_trainformat_test.jsonl'
+        base_url='https://huggingface.co/datasets/asaeed/chat_training_data/blob/main/'
+        train_path = f"{base_url}chat_trainformat_train.jsonl"
+        validation_path = f"{base_url}chat_trainformat_val.jsonl"
+        test_path = f"{base_url}chat_trainformat_test.jsonl"
         return [
             datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={
                                     "filepath": train_path}),
