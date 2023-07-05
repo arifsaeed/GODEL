@@ -57,11 +57,18 @@ We use json format to represent a training example. As shown in the above exampl
 * **Reponse** - The target agent respose. It can be a template, an api call or natural language.
 
 **Fine-tuning**
+
+
+
+
+
+
+
 ```Bash
-DATA_NAME={path_of_data}
-OUTPUT_DIR={path_of_fine-tuned_model}
-MODEL_PATH={path_of_pre-trained_model}
-EXP_NAME={experiment_name}
+DATA_NAME="asaeed/chat_training_data"
+OUTPUT_DIR="examples/chat/ckpt"
+MODEL_PATH="tiiuae/falcon-7b"
+EXP_NAME="finetuneChatFalcon"
 
 python train.py --model_name_or_path ${MODEL_PATH} \
 	--dataset_name ${DATA_NAME} \
@@ -73,7 +80,9 @@ python train.py --model_name_or_path ${MODEL_PATH} \
 	--num_train_epochs 50 \
 	--save_steps 10000 \
 	--num_beams 5 \
+	--login_token "" \
 	--exp_name ${EXP_NAME} --preprocessing_num_workers 24
+
 ```
 
 

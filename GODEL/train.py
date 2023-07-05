@@ -31,6 +31,7 @@ from transformers import (
     AdamW,
     AutoConfig,
     AutoModelForSeq2SeqLM,
+    AutoModelForCausalLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
     SchedulerType,
@@ -41,6 +42,7 @@ from transformers import (
 from utils.text_normalization import normalize_answer
 from datasets_loader.dataset_mapping import goal_directed_mapping_function,chat_context_mapping_function
 from dotenv import load_dotenv
+from huggingface_hub import login
 
 # Load pre-defined environment variable
 load_dotenv()
@@ -254,7 +256,11 @@ def parse_args():
         default='peft',
         help="the type of training to be carried out, i.e. full_finetuning, peft",
     )
-    
+    parser.add_argument(
+        "--login_token",
+        type=str,
+        help="the token you need to access the data",
+    )    
 
     args = parser.parse_args()
 
@@ -276,7 +282,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    login(args.login_token)
     if args.source_prefix is None and args.model_name_or_path in [
         "t5-small",
         "t5-base",
@@ -337,7 +343,7 @@ def main():
     # download the dataset.
     if args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset(args.dataset_name, args.dataset_config_name)
+        raw_datasets = load_dataset(args.dataset_name, args.dataset_config_name,use_auth_token=True)
     else:
         data_files = {}
         if args.train_file is not None:
@@ -373,15 +379,18 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
+    #Automodel for seq2SeqLM is for encoder decoder models
     if args.model_name_or_path:
-        model = AutoModelForSeq2SeqLM.from_pretrained(
+        #model = AutoModelForSeq2SeqLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
         )
     else:
         logger.info("Training new model from scratch")
-        model = AutoModelForSeq2SeqLM.from_config(config)
+        model = AutoModelForCausalLM.from_config(config)
+        #model = AutoModelForSeq2SeqLM.from_config(config)
     
     #if (args.training_type =="peft"):
     #    model = get_peft_model(model)
@@ -417,6 +426,7 @@ def main():
         num_proc=args.preprocessing_num_workers,
         load_from_cache_file=False,
         desc=f"Processing dataset",
+        fn_kwargs={"tokenizer": tokenizer, "padding": padding,"args":args}
     )
 
     train_dataset = lm_datasets["train"]
