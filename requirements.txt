@@ -1,17 +1,17 @@
 huggingface_hub
 absl-py==0.15.0
-accelerate==0.6.1
-datasets==2.0.0
+accelerate
+datasets
 filelock==3.4.2
-jsonlines==3.0.0
+jsonlines
 nltk==3.7
-numpy==1.22.3
+numpy
 python-dotenv==0.20.0
 rouge_score==0.0.4
 six==1.16.0
 torch
 tqdm==4.64.0
-transformers==4.17.0
+transformers
 wandb==0.12.11
 fire==0.4.0
 flask==2.0.2
@@ -21,3 +21,4 @@ beautifulsoup4==4.6.0
 zstandard==0.18.0
 flashtext==2.7
 dotmap
+einops

@@ -386,10 +386,11 @@ def main():
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
+            trust_remote_code=True
         )
     else:
         logger.info("Training new model from scratch")
-        model = AutoModelForCausalLM.from_config(config)
+        model = AutoModelForCausalLM.from_config(config,trust_remote_code=True)
         #model = AutoModelForSeq2SeqLM.from_config(config)
     
     #if (args.training_type =="peft"):
